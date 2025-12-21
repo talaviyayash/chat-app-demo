@@ -4,58 +4,70 @@ import JWTHelper from '../utils/jwtHelper';
 import { AppError } from '../utils/AppError';
 
 const signup = async (req: Request, res: Response) => {
-    const email = req.body.email?.trim().toLowerCase();
-    const { name, password } = req.body;
+  const email = req.body.email?.trim().toLowerCase();
+  const { name, password } = req.body;
 
-    const existingUser = await UserService.getUserByEmail(email);
-    if (existingUser) {
-      throw new AppError('User already exists.', 400);
-    }
+  const existingUser = await UserService.getUserByEmail(email);
+  if (existingUser) {
+    throw new AppError('User already exists.', 400);
+  }
 
-    const user = await UserService.createUser({
-      email,
-      name,
-      password,
-    });
+  const user = await UserService.createUser({
+    email,
+    name,
+    password,
+  });
 
-    const userData = user.toObject();
-    delete userData.password;
-    delete userData.__v;
+  const userData = user.toObject();
+  delete userData.password;
+  delete userData.__v;
 
-    const token = JWTHelper.generateJWT({ id: userData._id.toString() });
+  const token = JWTHelper.generateJWT({ id: userData._id.toString() });
 
-    return res.success(201, 'User signup successfully.', {
-      token,
-      user: userData,
-    });
+  return res.success(201, 'User signup successfully.', {
+    token,
+    user: userData,
+  });
 };
 
 const signin = async (req: Request, res: Response) => {
-    const { password } = req.body;
-    const email = req.body.email?.trim().toLowerCase();
+  const { password } = req.body;
+  const email = req.body.email?.trim().toLowerCase();
 
-    const user = await UserService.getUserByEmail(email);
-    if (!user) {
-      throw new AppError('Invalid email or password.', 401);
-    }
+  const user = await UserService.getUserByEmail(email);
+  if (!user) {
+    throw new AppError('Invalid email or password.', 401);
+  }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      throw new AppError('Invalid email or password.', 401);
-    }
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    throw new AppError('Invalid email or password.', 401);
+  }
 
-    const userData = user.toObject();
-    delete userData.password;
-    delete userData.__v;
+  const userData = user.toObject();
+  delete userData.password;
+  delete userData.__v;
 
-    const token = JWTHelper.generateJWT({ id: userData._id.toString() });
+  const token = JWTHelper.generateJWT({ id: userData._id.toString() });
 
-    return res.success(200, 'Signin successful.', { token, user: userData });
+  return res.success(200, 'Signin successful.', { token, user: userData });
+};
+
+const getProfile = async (req: Request, res: Response) => {
+  const userId = (req as any).user._id;
+  const user = await UserService.getUserById(userId);
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  return res.success(200, 'User profile fetched successfully', user);
 };
 
 const authController = {
   signup,
   signin,
+  getProfile,
 };
 
 export default authController;

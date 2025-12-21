@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import useApi from "@/hooks/useApi";
+import { addProfile } from "@/store/slice/appSlice";
+import { useDispatch } from "react-redux";
 
 interface SignupFormValues {
     name: string;
@@ -29,9 +32,24 @@ interface SignupFormValues {
     confirmPassword: string;
 }
 
+
+interface SignupResponse {
+    token: string;
+    user: {
+        _id: string;
+        name: string;
+        email: string;
+        createdAt: string;
+        updatedAt: string;
+    };
+}
+
 const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const { api } = useApi();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const form = useForm<SignupFormValues>({
         mode: "onChange",
@@ -43,9 +61,21 @@ const Signup = () => {
         },
     });
 
-    const onSubmit = (data: SignupFormValues) => {
-        console.log("Sign up data:", data);
-        // TODO: Implement actual registration logic
+    const onSubmit = async (data: SignupFormValues) => {
+        const response = await api<SignupResponse>({
+            method: "POST",
+            endPoint: "/auth/signup",
+            showToastMessage: true,
+            data: {
+                name: data.name,
+                email: data.email,
+                password: data.password,
+            },
+        });
+        if (response.success && response.data) {
+            navigate("/");
+            localStorage.setItem("token", response.data.token);
+        }
     };
 
     return (

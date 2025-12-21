@@ -21,10 +21,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import useApi from "@/hooks/useApi";
+import { useNavigate } from "react-router-dom";
 
 interface SigninFormValues {
   email: string;
   password: string;
+}
+
+interface SignInResponse {
+  token: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 const Signin = () => {
@@ -37,10 +50,22 @@ const Signin = () => {
       password: "",
     },
   });
+  const { api } = useApi();
+  const navigate = useNavigate();
 
-  const onSubmit = (data: SigninFormValues) => {
+  const onSubmit = async (data: SigninFormValues) => {
     console.log("Sign in data:", data);
-    // TODO: Implement actual authentication logic
+    const response = await api<SignInResponse>({
+      method: "POST",
+      endPoint: "/auth/signin",
+      data: data,
+      showToastMessage: true,
+    });
+    console.log("Sign in response:", response);
+    if (response.success && response.data) {
+      navigate("/");
+      localStorage.setItem("token", response.data.token);
+    }
   };
 
   return (
