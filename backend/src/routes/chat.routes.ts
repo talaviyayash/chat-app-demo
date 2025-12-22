@@ -19,5 +19,6 @@ chatRouter.post(
     validateRequest(chatValidation.createGroupChatSchema),
     ChatController.createGroupChat
 );
+chatRouter.get('/:chatId', protect, ChatController.allMessages);
 
 export default chatRouter;

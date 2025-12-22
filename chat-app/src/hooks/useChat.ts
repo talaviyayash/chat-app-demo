@@ -3,7 +3,18 @@ import useApi from "@/hooks/useApi";
 import { useSelector } from "react-redux";
 import { getUserProfile } from "@/store/reduxFunc";
 import { useSocket } from "@/hooks/useSocket";
+import { useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
 import type { IUser } from "@/types/IUser";
+
+export interface Message {
+  _id: string;
+  sender: IUser;
+  content: string;
+  chat: Chat | string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Chat {
   _id: string;
@@ -20,15 +31,27 @@ export interface Chat {
 }
 
 export const useChat = () => {
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedChat = useMemo(() => searchParams.get("id"), [searchParams]);
+
+  const setSelectedChat = useCallback((id: string | null) => {
+    if (id) {
+      setSearchParams({ id });
+    } else {
+      setSearchParams({});
+    }
+  }, [setSearchParams]);
+
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [message, setMessage] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const { api } = useApi();
   const userProfile = useSelector(getUserProfile);
-  const { on } = useSocket();
+  const { on, socketRef } = useSocket();
 
-  const getChat = useCallback(async () => {
+  const getChat = async () => {
     const response = await api<Chat[]>({
       endPoint: "/chat",
       method: "GET",
@@ -36,23 +59,17 @@ export const useChat = () => {
     if (response.success && response.data) {
       setChats(response.data);
     }
-  }, [api]);
+  }
 
-  const handleNewChat = useCallback(
-    (email: string) => {
-      console.log("Creating new chat with:", email);
-      getChat(); // Refresh list
-    },
-    [getChat]
-  );
+  const handleNewChat = (email: string) => {
+    console.log("Creating new chat with:", email);
+    getChat(); // Refresh list
+  }
 
-  const handleCreateGroup = useCallback(
-    (groupName: string, emails: string[]) => {
-      console.log("Creating group:", groupName, "with members:", emails);
-      getChat(); // Refresh list
-    },
-    [getChat]
-  );
+  const handleCreateGroup = (groupName: string, emails: string[]) => {
+    console.log("Creating group:", groupName, "with members:", emails);
+    getChat(); // Refresh list
+  }
 
   const getChatName = useCallback(
     (chat: Chat) => {
@@ -62,7 +79,7 @@ export const useChat = () => {
       const otherUser = chat.users.find((u) => u._id !== userProfile?._id);
       return otherUser ? otherUser.name : "Unknown User";
     },
-    [userProfile?._id]
+    []
   );
 
   const getSelectedChatName = useCallback(() => {
@@ -75,15 +92,73 @@ export const useChat = () => {
     getChat();
   }, []);
 
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    console.log("Sending message:", message);
+    socketRef.current?.emit("send-message", {
+      chatId: selectedChat,
+      content: message,
+
+    });
+    setMessage("");
+  }
+
+
   useEffect(() => {
-    // const removeListener = on("message", (msg) => {
-    //   console.log("New message received in hook:", msg);
-    //   getChat(); // Refresh list on new message to update latestMessage
-    // });
-    // return () => {
-    //   removeListener();
-    // };
-  }, [on, getChat]);
+    const removeListener = on("message", (data: any) => {
+      console.log("Received message:", data);
+      const newMessage = data as Message;
+      console.log('newMessage', newMessage)
+
+      const chatId = typeof newMessage.chat === 'string' ? newMessage.chat : newMessage.chat._id;
+
+      if (chatId === selectedChat) {
+        setMessages((prev) => [...prev, newMessage]);
+      }
+
+      setChats((prev) => {
+        return prev.map((chat) => {
+          if (chat._id === chatId) {
+            return {
+              ...chat,
+              latestMessage: {
+                content: newMessage.content,
+                createdAt: newMessage.createdAt,
+              },
+            };
+          }
+          return chat;
+        });
+      });
+
+
+    });
+
+    return () => {
+      removeListener();
+    };
+  }, [on, selectedChat]);
+
+
+
+  const getMessages = async () => {
+    const response = await api<Message[]>({
+      endPoint: `/chat/${selectedChat}`,
+      method: "GET",
+    });
+    if (response.success && response.data) {
+      setMessages(response.data);
+    }
+  }
+
+
+
+  useEffect(() => {
+    if (selectedChat) {
+      getMessages();
+    }
+  }, [selectedChat]);
+
 
   return {
     chats,
@@ -98,6 +173,10 @@ export const useChat = () => {
     getChatName,
     getSelectedChatName,
     refreshChats: getChat,
+    message, setMessage,
+    handleSendMessage,
+    messages,
+    userProfile
   };
 };
 

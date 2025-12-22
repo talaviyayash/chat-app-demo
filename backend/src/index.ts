@@ -10,7 +10,7 @@ import authRouter from './routes/auth.routes';
 import chatRouter from './routes/chat.routes';
 import http from 'http';
 import { Server } from 'socket.io';
-import { initializeSocketServer } from './socket';
+import { initializeSocketServer } from './socket/socket';
 
 const app = express();
 

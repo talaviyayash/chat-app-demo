@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import ChatModel from '../models/chat.model';
+import MessageModel from '../models/message.model';
 import UserService from '../service/user.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { AppError } from '../utils/AppError';
@@ -55,13 +56,6 @@ const fetchChats = async (req: AuthRequest, res: Response) => {
 const createGroupChat = async (req: AuthRequest, res: Response) => {
   const emails = req.body.users;
 
-  // if (emails.length < 2) {
-  //   throw new AppError(
-  //     'More than 2 users are required to form a group chat',
-  //     400,
-  //   );
-  // }
-
   const users = await UserService.getUsersByEmails(emails);
 
   if (users.length !== emails.length) {
@@ -84,10 +78,20 @@ const createGroupChat = async (req: AuthRequest, res: Response) => {
   return res.success(200, 'Group Chat Created', fullGroupChat);
 };
 
+const allMessages = async (req: AuthRequest, res: Response) => {
+  const { chatId } = req.params;
+
+  const messages = await MessageModel.find({ chat: chatId })
+    .populate('sender', 'name email')
+
+  return res.success(200, 'Messages fetched successfully', messages);
+};
+
 const ChatController = {
   createChat,
   fetchChats,
   createGroupChat,
+  allMessages,
 };
 
 export default ChatController;

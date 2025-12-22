@@ -60,6 +60,7 @@ export const useSocket = () => {
     isConnected,
     emit,
     on,
+    socketRef
   };
 };
 

@@ -18,6 +18,11 @@ const Chat = () => {
     handleCreateGroup,
     getChatName,
     getSelectedChatName,
+    message,
+    setMessage,
+    handleSendMessage,
+    messages,
+    userProfile
   } = useChat();
 
   return (
@@ -34,6 +39,11 @@ const Chat = () => {
       <ChatWindow
         selectedChat={selectedChat}
         getSelectedChatName={getSelectedChatName}
+        message={message}
+        setMessage={setMessage}
+        handleSendMessage={handleSendMessage}
+        messages={messages}
+        userProfile={userProfile}
       />
 
       <NewChatModal
