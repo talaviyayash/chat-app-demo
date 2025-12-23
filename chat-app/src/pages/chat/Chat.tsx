@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { NewChatModal } from "@/components/NewChatModal";
-import { CreateGroupModal } from "@/components/CreateGroupModal";
+import { NewChatModal } from "@/pages/chat/NewChatModal";
+import { CreateGroupModal } from "@/pages/chat/CreateGroupModal";
 import { useChat } from "@/hooks/useChat";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { ChatWindow } from "./components/ChatWindow";

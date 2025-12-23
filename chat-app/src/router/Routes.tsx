@@ -1,5 +1,5 @@
-import Signin from "@/auth/signin/Signin";
-import Signup from "@/auth/signup/Signup";
+import Signin from "@/pages/auth/signin/Signin";
+import Signup from "@/pages/auth/signup/Signup";
 import AuthLayout from "@/layout/AuthLayout";
 import ProtectedLayout from "@/layout/ProtectedLayout";
 import Chat from "@/pages/chat/Chat";
@@ -22,7 +22,7 @@ const Routes = () => {
           path: "/signup",
           element: <Signup />,
         },
-      ]
+      ],
     },
     {
       element: <ProtectedLayout />,
@@ -31,7 +31,7 @@ const Routes = () => {
           path: "/chat",
           element: <Chat />,
         },
-      ]
+      ],
     },
   ]);
 
