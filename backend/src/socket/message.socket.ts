@@ -1,8 +1,8 @@
 import { Server } from "socket.io";
 import { Types } from "mongoose";
-import MessageModel from "../models/message.model";
-import ChatModel from "../models/chat.model";
 import { AuthenticatedSocket } from "../middlewares/socketAuth.middleware";
+import MessageService from "../service/message.service";
+import ChatService from "../service/chat.service";
 
 interface SendMessagePayload {
     chatId: string;
@@ -21,28 +21,19 @@ export const messageSocket = (io: Server, socket: AuthenticatedSocket): void => 
 
             if (!content || !chatId) return;
 
-            let message = await MessageModel.create({
-                sender: socket.user?.id,
-                chat: new Types.ObjectId(chatId),
+            const message = await MessageService.createMessage({
+                sender: socket.user?.id as string,
+                chatId,
                 content,
             });
 
-            message = await message.populate([
-                { path: "sender", select: "name email" },
-                { path: "chat" },
-            ]);
-
-            await ChatModel.findByIdAndUpdate(chatId, {
-                latestMessage: message._id,
-            });
+            await ChatService.updateLatestMessage(chatId, message.id);
 
             const chat = message.chat as any;
             if (chat && chat.users) {
                 chat.users.forEach((user: any) => {
                     const userId = user.toString();
-
                     console.log('user-${userId}', `user-${userId}`)
-
                     io.to(`user-${userId}`).emit("message", message);
                 });
             }
@@ -56,10 +47,9 @@ export const messageSocket = (io: Server, socket: AuthenticatedSocket): void => 
     socket.on("message-read", async (data: any): Promise<void> => {
         const { chatId } = data;
         console.log('chatId', chatId)
-        await MessageModel.updateMany(
-            { chat: chatId },
-            { $addToSet: { readBy: socket.user?.id } }
-        );
+        if (socket.user?.id) {
+            await MessageService.markMessagesAsRead(chatId, socket.user.id);
+        }
     });
 };
 

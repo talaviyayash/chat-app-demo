@@ -68,8 +68,7 @@ const useApi = () => {
     } catch (e: unknown) {
       console.log("🚀 ~ api ~ e:", e);
       if (axios.isAxiosError(e)) {
-        if (showToastMessage)
-          toast.error(e.response?.data.errors);
+        if (showToastMessage) toast.error(e.response?.data.errors);
         if (e.status === 401) {
           localStorage.clear();
           navigate("/");
