@@ -17,7 +17,7 @@ logs/
 
 # dotenv
 .env
-.env.*
+
 
 # OS files
 .DS_Store
