@@ -69,10 +69,7 @@ export const ChatSidebar = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="relative mt-2">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="text" placeholder="Search chats..." className="pl-8" />
-        </div>
+
       </SidebarHeader>
 
       <SidebarContent>
