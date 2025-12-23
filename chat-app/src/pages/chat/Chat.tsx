@@ -34,6 +34,7 @@ const Chat = () => {
         setIsNewChatOpen={setIsNewChatOpen}
         setIsCreateGroupOpen={setIsCreateGroupOpen}
         getChatName={getChatName}
+        userProfile={userProfile}
       />
 
       <ChatWindow

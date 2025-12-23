@@ -52,5 +52,14 @@ export const messageSocket = (io: Server, socket: AuthenticatedSocket): void => 
             socket.emit("error", { message: "Failed to send message" });
         }
     });
+
+    socket.on("message-read", async (data: any): Promise<void> => {
+        const { chatId } = data;
+        console.log('chatId', chatId)
+        await MessageModel.updateMany(
+            { chat: chatId },
+            { $addToSet: { readBy: socket.user?.id } }
+        );
+    });
 };
 

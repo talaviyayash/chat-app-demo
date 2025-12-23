@@ -14,6 +14,7 @@ export interface Message {
   chat: Chat | string;
   createdAt: string;
   updatedAt: string;
+  readBy: string[]
 }
 
 export interface Chat {
@@ -27,6 +28,7 @@ export interface Chat {
   latestMessage?: {
     content: string;
     createdAt: string;
+    readBy: string[]
   };
 }
 
@@ -111,9 +113,13 @@ export const useChat = () => {
       console.log('newMessage', newMessage)
 
       const chatId = typeof newMessage.chat === 'string' ? newMessage.chat : newMessage.chat._id;
+      const isRead = chatId === selectedChat;
+      const readBy = isRead
+        ? Array.from(new Set([...newMessage.readBy, userProfile?._id || ""]))
+        : newMessage.readBy;
 
-      if (chatId === selectedChat) {
-        setMessages((prev) => [...prev, newMessage]);
+      if (isRead) {
+        setMessages((prev) => [...prev, { ...newMessage, readBy }]);
       }
 
       setChats((prev) => {
@@ -124,6 +130,7 @@ export const useChat = () => {
               latestMessage: {
                 content: newMessage.content,
                 createdAt: newMessage.createdAt,
+                readBy: readBy
               },
             };
           }
@@ -131,6 +138,9 @@ export const useChat = () => {
         });
       });
 
+      if (isRead) {
+        socketRef.current?.emit("message-read", { chatId: selectedChat });
+      }
 
     });
 
@@ -147,7 +157,17 @@ export const useChat = () => {
       method: "GET",
     });
     if (response.success && response.data) {
-      setMessages(response.data);
+      setMessages(response.data?.map((msg) => {
+        const alreadyRead = msg.readBy.includes(userProfile?._id || "");
+        const isSender = msg.sender?._id === userProfile?._id;
+
+        if (alreadyRead || isSender) return msg;
+
+        return {
+          ...msg,
+          readBy: Array.from(new Set([...msg.readBy, userProfile?._id || ""])),
+        };
+      }));
     }
   }
 
@@ -156,8 +176,26 @@ export const useChat = () => {
   useEffect(() => {
     if (selectedChat) {
       getMessages();
+      socketRef.current?.emit("message-read", { chatId: selectedChat });
+      setChats((prev) =>
+        prev.map((chat) => {
+          if (chat._id === selectedChat && chat.latestMessage) {
+            const userId = userProfile?._id || "";
+            if (!chat.latestMessage.readBy.includes(userId)) {
+              return {
+                ...chat,
+                latestMessage: {
+                  ...chat.latestMessage,
+                  readBy: Array.from(new Set([...chat.latestMessage.readBy, userId])),
+                },
+              };
+            }
+          }
+          return chat;
+        })
+      );
     }
-  }, [selectedChat]);
+  }, [selectedChat, userProfile?._id]);
 
 
   return {

@@ -1,4 +1,5 @@
 import { MessageSquare, Plus, Search, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ interface ChatSidebarProps {
   setIsNewChatOpen: (open: boolean) => void;
   setIsCreateGroupOpen: (open: boolean) => void;
   getChatName: (chat: Chat) => string;
+  userProfile?: any;
 }
 
 export const ChatSidebar = ({
@@ -36,6 +38,7 @@ export const ChatSidebar = ({
   setIsNewChatOpen,
   setIsCreateGroupOpen,
   getChatName,
+  userProfile,
 }: ChatSidebarProps) => {
   return (
     <Sidebar>
@@ -97,8 +100,18 @@ export const ChatSidebar = ({
                           <span className="font-medium text-sm truncate">
                             {getChatName(chat)}
                           </span>
+                          {chat.latestMessage && !chat.latestMessage.readBy.includes(userProfile?._id || "") && (
+                            <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
+                              New
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className={cn(
+                          "text-xs truncate",
+                          chat.latestMessage && !chat.latestMessage.readBy.includes(userProfile?._id || "")
+                            ? "text-foreground font-medium"
+                            : "text-muted-foreground"
+                        )}>
                           {chat.latestMessage?.content || "No messages yet"}
                         </p>
                       </div>
