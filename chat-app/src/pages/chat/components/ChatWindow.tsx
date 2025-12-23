@@ -67,7 +67,9 @@ export const ChatWindow = ({
                       {msg.content}
                     </div>
                     <span className="text-[10px] text-muted-foreground px-1">
-                      {isOwn ? "You" : msg.sender.name} • {new Date(msg.createdAt).toLocaleTimeString([], {
+                      {isOwn ? "You" : msg.sender.name} • {new Date(msg.createdAt).toLocaleString([], {
+                        month: "short",
+                        day: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
